@@ -1,0 +1,2314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Plaid & Gabor-Julesz Isoluminance Blender - Psychophysics Tool</title>
+  <style>
+    :root {
+      --bg-primary: #0f172a;
+      --bg-secondary: #1e293b;
+      --bg-tertiary: #334155;
+      --border-color: #475569;
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --accent: #38bdf8;
+      --accent-hover: #0ea5e9;
+      --accent-glow: rgba(56, 189, 248, 0.25);
+      --wave1-color: #38bdf8;
+      --wave2-color: #f43f5e;
+      --texture-color: #a855f7;
+      --card-bg: rgba(30, 41, 59, 0.7);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    header {
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border-color);
+      padding: 10px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: blur(8px);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-logo {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--wave1-color) 0%, var(--wave2-color) 50%, var(--texture-color) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 0.75rem;
+      color: #0f172a;
+      box-shadow: 0 0 12px var(--accent-glow);
+    }
+
+    .brand-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      color: var(--text-primary);
+    }
+
+    .brand-badge {
+      font-size: 0.68rem;
+      padding: 2px 7px;
+      border-radius: 9999px;
+      background: rgba(168, 85, 247, 0.15);
+      color: var(--texture-color);
+      border: 1px solid rgba(168, 85, 247, 0.3);
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .view-switch {
+      display: flex;
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 3px;
+      gap: 3px;
+    }
+
+    .view-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      padding: 5px 12px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .view-btn.active {
+      background: var(--accent);
+      color: #0f172a;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .btn {
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease-in-out;
+      border: 1px solid transparent;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #0f172a;
+    }
+    .btn-primary:hover { background: var(--accent-hover); }
+
+    .btn-secondary {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      border-color: var(--border-color);
+    }
+    .btn-secondary:hover { background: #475569; }
+
+    .btn-danger {
+      background: rgba(239, 68, 68, 0.15);
+      color: #ef4444;
+      border-color: rgba(239, 68, 68, 0.3);
+    }
+    .btn-danger:hover { background: rgba(239, 68, 68, 0.25); }
+
+    /* App Workspace Layout */
+    .workspace {
+      display: grid;
+      grid-template-columns: 360px 1fr 340px;
+      flex: 1;
+      height: calc(100vh - 57px);
+      overflow: hidden;
+    }
+
+    .param-pane, .analysis-pane {
+      background: var(--bg-secondary);
+      border-right: 1px solid var(--border-color);
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .analysis-pane {
+      border-right: none;
+      border-left: 1px solid var(--border-color);
+    }
+
+    .section-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 6px;
+    }
+
+    .section-title {
+      font-size: 0.82rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-reset-sm {
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 0.7rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      transition: all 0.15s;
+    }
+    .btn-reset-sm:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--text-primary);
+    }
+
+    .param-row {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .param-label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.74rem;
+    }
+
+    .param-label {
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .param-value {
+      font-family: monospace;
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .snap-group {
+      display: flex;
+      gap: 4px;
+      margin-top: 4px;
+    }
+
+    .snap-pill {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      font-size: 0.68rem;
+      padding: 3px 6px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: monospace;
+      flex: 1;
+      text-align: center;
+      transition: all 0.12s;
+    }
+    .snap-pill:hover, .snap-pill.active {
+      background: var(--accent);
+      color: #0f172a;
+      border-color: var(--accent);
+      font-weight: 700;
+    }
+
+    input[type=range] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 5px;
+      background: #334155;
+      border-radius: 3px;
+      outline: none;
+      accent-color: var(--accent);
+    }
+
+    select {
+      background: #1e293b;
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      padding: 5px 8px;
+      border-radius: 6px;
+      font-size: 0.74rem;
+      outline: none;
+      cursor: pointer;
+    }
+
+    /* Main Stage */
+    .stage {
+      display: flex;
+      flex-direction: column;
+      background: #060913;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stage-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 16px;
+      background: rgba(15, 23, 42, 0.75);
+      border-bottom: 1px solid var(--border-color);
+      backdrop-filter: blur(6px);
+      z-index: 10;
+    }
+
+    .canvas-container {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      position: relative;
+      overflow: auto;
+    }
+
+    #blendCanvas {
+      max-width: 100%;
+      max-height: 100%;
+      border-radius: 6px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+      cursor: crosshair;
+    }
+
+    /* 3-Panel Decomposition View */
+    .decomp-view {
+      display: none;
+      width: 100%;
+      height: 100%;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .decomp-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 10px;
+    }
+
+    .decomp-card canvas {
+      width: 240px;
+      height: 240px;
+      border-radius: 4px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    }
+
+    .cursor-hud {
+      position: absolute;
+      bottom: 12px;
+      left: 16px;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 6px 12px;
+      font-size: 0.7rem;
+      font-family: monospace;
+      color: var(--text-secondary);
+      display: flex;
+      gap: 12px;
+      pointer-events: none;
+      backdrop-filter: blur(4px);
+    }
+    .cursor-hud b { color: var(--text-primary); }
+
+    /* Dial widget for angles */
+    .angle-dial-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .dial-wheel {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: #1e293b;
+      border: 2px solid var(--border-color);
+      position: relative;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .dial-indicator {
+      width: 50%;
+      height: 2px;
+      background: var(--accent);
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform-origin: 0% 50%;
+      pointer-events: none;
+    }
+
+    /* Analysis Plots */
+    .analysis-box {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .analysis-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.7rem;
+      color: var(--text-secondary);
+      font-family: monospace;
+    }
+    .analysis-canvas {
+      width: 100%;
+      border-radius: 6px;
+      background: #000;
+      border: 1px solid var(--border-color);
+    }
+
+    /* Modals */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(4px);
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-content {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      width: 90%;
+      max-width: 620px;
+      max-height: 85vh;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation Header -->
+  <header>
+    <div class="brand">
+      <div class="brand-logo">&lambda;&times;&theta;</div>
+      <div>
+        <div class="brand-title">Plaid & Isoluminance Blender</div>
+        <div style="font-size: 0.68rem; color: var(--text-secondary);">Gabor-Julesz Isoluminance Texture Blending</div>
+      </div>
+      <span class="brand-badge">Psychophysics</span>
+    </div>
+
+    <!-- View Switcher -->
+    <div class="view-switch">
+      <button id="btnViewBlend" class="view-btn active">Single Blended View</button>
+      <button id="btnViewDecomp" class="view-btn">3-Panel Decomposition</button>
+    </div>
+
+    <!-- Header Actions -->
+    <div class="header-actions">
+      <button id="btnResetAll" class="btn btn-danger" title="Restore all parameters to baseline defaults">Reset All</button>
+      <button id="btnExportCode" class="btn btn-secondary">Python Code</button>
+      <button id="btnExportCSV" class="btn btn-secondary">CSV Matrix</button>
+      <button id="btnDownloadImage" class="btn btn-primary">Export PNG</button>
+    </div>
+  </header>
+
+  <!-- Main Workspace -->
+  <div class="workspace">
+
+    <!-- Left Controls Sidebar -->
+    <aside class="param-pane">
+
+      <!-- Card 1: Master Blend Weight -->
+      <div class="section-card">
+        <div class="section-header">
+          <span class="section-title">
+            <span style="color:var(--accent)">w<sub>Plaid</sub></span> &amp; <span style="color:var(--texture-color)">w<sub>Texture</sub></span> Blend
+          </span>
+          <button class="btn-reset-sm" data-reset="weights">Reset</button>
+        </div>
+        <div class="param-row">
+          <div class="param-label-row">
+            <span class="param-label">Weighted Balance (&alpha;):</span>
+            <span class="param-value" id="valBlendAlpha">50% (Equal)</span>
+          </div>
+          <input type="range" id="paramBlendAlpha" min="0" max="100" value="50">
+          <div class="snap-group">
+            <button class="snap-pill" data-alpha="0">Pure Plaid</button>
+            <button class="snap-pill" data-alpha="25">75% P / 25% T</button>
+            <button class="snap-pill active" data-alpha="50">50 / 50</button>
+            <button class="snap-pill" data-alpha="75">25% P / 75% T</button>
+            <button class="snap-pill" data-alpha="100">Pure Texture</button>
+          </div>
+        </div>
+        <div style="display:flex; justify-content:space-between; font-size:0.72rem; font-family:monospace;">
+          <span>w<sub>P</sub>: <b id="valWeightPlaid" style="color:var(--accent)">0.50</b></span>
+          <span>STR: <b id="valSNR" style="color:#22c55e">0.0 dB</b></span>
+          <span>w<sub>T</sub>: <b id="valWeightTexture" style="color:var(--texture-color)">0.50</b></span>
+        </div>
+      </div>
+
+      <!-- Card 2: Master Plaid Contrast -->
+      <div class="section-card">
+        <div class="section-header">
+          <span class="section-title">Master Plaid Contrast</span>
+          <button class="btn-reset-sm" data-reset="contrast">Reset</button>
+        </div>
+        <div class="param-row">
+          <div class="param-label-row">
+            <span class="param-label">Plaid Amplitude (C<sub>plaid</sub>):</span>
+            <span class="param-value" id="valPlaidContrast">100%</span>
+          </div>
+          <input type="range" id="paramPlaidContrast" min="0" max="100" value="100">
+          <div class="snap-group">
+            <button class="snap-pill" data-contrast="0">0% (Flat)</button>
+            <button class="snap-pill" data-contrast="25">25%</button>
+            <button class="snap-pill" data-contrast="50">50%</button>
+            <button class="snap-pill" data-contrast="75">75%</button>
+            <button class="snap-pill active" data-contrast="100">100%</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 3: Plaid Carrier Components -->
+      <div class="section-card">
+        <div class="section-header">
+          <span class="section-title">Orthogonal Plaid Waves</span>
+          <button class="btn-reset-sm" data-reset="plaid">Reset</button>
+        </div>
+
+        <!-- Master Frequency -->
+        <div class="param-row">
+          <div class="param-label-row">
+            <span class="param-label">Master Frequency:</span>
+            <span class="param-value" id="valMasterFreq">6.0 cyc</span>
+          </div>
+          <input type="range" id="paramMasterFreq" min="1" max="24" step="0.5" value="6.0">
+          <div class="snap-group">
+            <button class="snap-pill" data-mf="2">2cy</button>
+            <button class="snap-pill" data-mf="4">4cy</button>
+            <button class="snap-pill active" data-mf="6">6cy</button>
+            <button class="snap-pill" data-mf="8">8cy</button>
+            <button class="snap-pill" data-mf="12">12cy</button>
+          </div>
+        </div>
+
+        <!-- Wave 1 -->
+        <div style="border-top:1px solid rgba(255,255,255,0.06); padding-top:8px;" class="param-row">
+          <div style="font-size:0.75rem; font-weight:700; color:var(--wave1-color); margin-bottom:2px;">Component Wave 1</div>
+          <div class="param-label-row">
+            <span class="param-label">Orientation (&theta;<sub>1</sub>):</span>
+            <span class="param-value" id="valTheta1">45.0&deg;</span>
+          </div>
+          <div class="angle-dial-wrapper">
+            <div class="dial-wheel" id="dialWheel1"><div class="dial-indicator" id="dialIndicator1" style="transform: translateY(-50%) rotate(45deg);"></div></div>
+            <input type="range" id="paramTheta1" min="0" max="360" step="1" value="45">
+          </div>
+          <div class="param-label-row" style="margin-top:4px;">
+            <span class="param-label">Contrast (C<sub>1</sub>):</span>
+            <span class="param-value" id="valContrast1">50%</span>
+          </div>
+          <input type="range" id="paramContrast1" min="0" max="100" value="50">
+        </div>
+
+        <!-- Wave 2 -->
+        <div style="border-top:1px solid rgba(255,255,255,0.06); padding-top:8px;" class="param-row">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
+            <span style="font-size:0.75rem; font-weight:700; color:var(--wave2-color)">Component Wave 2</span>
+            <label style="font-size:0.68rem; display:flex; align-items:center; gap:4px; cursor:pointer;">
+              <input type="checkbox" id="chkLockOrthogonal" checked>
+              <span>Lock Orthogonal (&perp;)</span>
+            </label>
+          </div>
+          <div class="param-label-row">
+            <span class="param-label">Orientation (&theta;<sub>2</sub>):</span>
+            <span class="param-value" id="valTheta2">135.0&deg;</span>
+          </div>
+          <input type="range" id="paramTheta2" min="0" max="360" step="1" value="135">
+          <div class="param-label-row" style="margin-top:4px;">
+            <span class="param-label">Contrast (C<sub>2</sub>):</span>
+            <span class="param-value" id="valContrast2">50%</span>
+          </div>
+          <input type="range" id="paramContrast2" min="0" max="100" value="50">
+        </div>
+      </div>
+
+      <!-- Card 4: Relative Spatial Shift (Plaid vs Texture) -->
+      <div class="section-card" style="border-color: rgba(56, 189, 248, 0.45); background: rgba(14, 165, 233, 0.05);">
+        <div class="section-header">
+          <span class="section-title" style="color:var(--accent)">
+            Relative Spatial Shift (&Delta;X, &Delta;Y)
+          </span>
+          <button class="btn-reset-sm" data-reset="shift">Reset Shift</button>
+        </div>
+        <p style="font-size:0.68rem; color:var(--text-secondary); line-height:1.3;">
+          Displace the texture pattern relative to the underlying plaid luminance pattern to explore phase misalignments.
+        </p>
+
+        <!-- Horizontal Shift -->
+        <div class="param-row">
+          <div class="param-label-row">
+            <span class="param-label">Horizontal Shift (&Delta;X):</span>
+            <span class="param-value" id="valShiftX">0 px (0.00 &lambda;)</span>
+          </div>
+          <input type="range" id="paramShiftX" min="-180" max="180" step="1" value="0">
+          <div class="snap-group">
+            <button class="snap-pill" data-shiftx="-0.5">-&frac12;&lambda;</button>
+            <button class="snap-pill" data-shiftx="-0.25">-&frac14;&lambda;</button>
+            <button class="snap-pill active" data-shiftx="0">0 (Aligned)</button>
+            <button class="snap-pill" data-shiftx="0.25">+&frac14;&lambda;</button>
+            <button class="snap-pill" data-shiftx="0.5">+&frac12;&lambda;</button>
+          </div>
+        </div>
+
+        <!-- Vertical Shift -->
+        <div class="param-row">
+          <div class="param-label-row">
+            <span class="param-label">Vertical Shift (&Delta;Y):</span>
+            <span class="param-value" id="valShiftY">0 px (0.00 &lambda;)</span>
+          </div>
+          <input type="range" id="paramShiftY" min="-180" max="180" step="1" value="0">
+          <div class="snap-group">
+            <button class="snap-pill" data-shifty="-0.5">-&frac12;&lambda;</button>
+            <button class="snap-pill" data-shifty="-0.25">-&frac14;&lambda;</button>
+            <button class="snap-pill active" data-shifty="0">0 (Aligned)</button>
+            <button class="snap-pill" data-shifty="0.25">+&frac14;&lambda;</button>
+            <button class="snap-pill" data-shifty="0.5">+&frac12;&lambda;</button>
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:2px; font-size:0.7rem;">
+          <label style="display:flex; align-items:center; gap:4px; cursor:pointer;">
+            <input type="checkbox" id="chkPeriodicWrap" checked>
+            <span>Seamless Torus Wrap</span>
+          </label>
+          <button id="btnZeroShift" class="btn-reset-sm" style="color:var(--accent); font-weight:600;">Zero Shift</button>
+        </div>
+      </div>
+
+      <!-- Card 5: Isoluminance Texture Generator -->
+      <div class="section-card" style="border-color: rgba(168, 85, 247, 0.4);">
+        <div class="section-header">
+          <span class="section-title" style="color:var(--texture-color)">
+            Plaid Isoluminance Textures
+          </span>
+          <button class="btn-reset-sm" data-reset="texture">Reset</button>
+        </div>
+
+        <!-- Spatial Organization Mode: Aligned vs Random Mixture Control -->
+        <div class="param-row">
+          <div class="param-label-row">
+            <span class="param-label" style="font-weight:700; color:var(--text-primary)">Spatial Arrangement:</span>
+            <span id="badgeArrangement" class="param-value" style="color:#22c55e; font-size:0.68rem;">Isoluminance-Aligned</span>
+          </div>
+          <div class="view-switch" style="width:100%; margin-top:2px;">
+            <button id="btnArrangementAligned" class="view-btn active" style="flex:1;">Aligned to Plaid</button>
+            <button id="btnArrangementMixture" class="view-btn" style="flex:1;">Random Mixture Control</button>
+          </div>
+          <div id="panelMixtureControl" style="display:none; justify-content:space-between; align-items:center; margin-top:4px; font-size:0.7rem;">
+            <span style="color:var(--text-secondary);">Homogeneous field mixing band textons</span>
+            <button id="btnRerollMixture" class="btn-reset-sm" style="color:var(--accent); font-weight:600;">Re-roll Mixture</button>
+          </div>
+        </div>
+
+        <!-- Quick Cue Presets -->
+        <div class="param-row" style="margin-top:2px;">
+          <span class="param-label" style="font-size:0.7rem; font-weight:600;">Cue Isolation Presets:</span>
+          <div class="snap-group" style="flex-wrap: wrap;">
+            <button class="snap-pill active" id="btnPreOri">Ori Only</button>
+            <button class="snap-pill" id="btnPreFreq">Freq Only</button>
+            <button class="snap-pill" id="btnPreCol">Color Only</button>
+            <button class="snap-pill" id="btnPreOriFreq">Ori + Freq</button>
+            <button class="snap-pill" id="btnPreAll">All Cues</button>
+          </div>
+        </div>
+
+        <!-- Texture Mode Tabs -->
+        <div class="param-row" style="margin-top:2px;">
+          <div class="view-switch" style="width:100%;">
+            <button id="tabModeGabor" class="view-btn active" style="flex:1;">Gabor Textons</button>
+            <button id="tabModeCarrier" class="view-btn" style="flex:1;">Continuous Carrier</button>
+            <button id="tabModeBands" class="view-btn" style="flex:1;">Iso-Bands</button>
+          </div>
+        </div>
+
+        <!-- Band Count -->
+        <div class="param-row" style="margin-top:4px;">
+          <div class="param-label-row">
+            <span class="param-label">Isoluminance Bands (K):</span>
+            <span class="param-value" id="valBandCount">5 Bands</span>
+          </div>
+          <input type="range" id="paramBandCount" min="3" max="9" step="2" value="5">
+        </div>
+
+        <!-- Dimension 1: Orientation Toggle & Options -->
+        <div style="border-top:1px solid rgba(255,255,255,0.06); padding-top:6px;" class="param-row">
+          <label style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;">
+            <span style="font-size:0.74rem; font-weight:700; color:var(--text-primary); display:flex; align-items:center; gap:6px;">
+              <input type="checkbox" id="chkVaryOri" checked>
+              <span>Vary Orientation Across Bands</span>
+            </span>
+            <span id="badgeOri" style="font-size:0.68rem; font-family:monospace; color:#22c55e">Active</span>
+          </label>
+          <div id="panelOriVary" style="display:flex; flex-direction:column; gap:4px; margin-top:4px;">
+            <div class="param-label-row">
+              <span class="param-label">Scheme:</span>
+              <select id="selOriScheme" style="width:170px;">
+                <option value="ortho">Ortho-Alternating (0&deg;/90&deg;)</option>
+                <option value="stepped">Stepped Ramp (0&deg;&rarr;180&deg;)</option>
+                <option value="tangent">Contour-Tangent (&perp;&nabla;I)</option>
+              </select>
+            </div>
+            <div class="param-label-row">
+              <span class="param-label">Julesz Jitter:</span>
+              <span class="param-value" id="valOriJitter">10&deg;</span>
+            </div>
+            <input type="range" id="paramOriJitter" min="0" max="45" step="2" value="10">
+          </div>
+          <div id="panelOriConst" style="display:none; margin-top:4px;" class="param-label-row">
+            <span class="param-label">Uniform Orientation:</span>
+            <input type="range" id="paramConstOri" min="0" max="180" step="5" value="0" style="width:140px;">
+            <span class="param-value" id="valConstOri">0&deg;</span>
+          </div>
+        </div>
+
+        <!-- Dimension 2: Frequency Toggle & Options -->
+        <div style="border-top:1px solid rgba(255,255,255,0.06); padding-top:6px;" class="param-row">
+          <label style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;">
+            <span style="font-size:0.74rem; font-weight:700; color:var(--text-primary); display:flex; align-items:center; gap:6px;">
+              <input type="checkbox" id="chkVaryFreq">
+              <span>Vary Spatial Frequency Across Bands</span>
+            </span>
+            <span id="badgeFreq" style="font-size:0.68rem; font-family:monospace; color:var(--text-secondary)">Uniform</span>
+          </label>
+          <div id="panelFreqVary" style="display:none; flex-direction:column; gap:4px; margin-top:4px;">
+            <div class="param-label-row">
+              <span class="param-label">Distribution:</span>
+              <select id="selFreqGrad" style="width:170px;">
+                <option value="divergent">Divergent (Fine at Extrema)</option>
+                <option value="monotonic">Monotonic Ramp</option>
+                <option value="alternating">Alternating Coarse/Fine</option>
+              </select>
+            </div>
+          </div>
+          <div id="panelFreqConst" style="display:flex; margin-top:4px;" class="param-label-row">
+            <span class="param-label">Uniform Frequency:</span>
+            <input type="range" id="paramConstFreq" min="8" max="36" step="2" value="18" style="width:140px;">
+            <span class="param-value" id="valConstFreq">18cy</span>
+          </div>
+        </div>
+
+        <!-- Dimension 3: Color Toggle & Options -->
+        <div style="border-top:1px solid rgba(255,255,255,0.06); padding-top:6px;" class="param-row">
+          <label style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;">
+            <span style="font-size:0.74rem; font-weight:700; color:var(--text-primary); display:flex; align-items:center; gap:6px;">
+              <input type="checkbox" id="chkVaryCol">
+              <span>Vary Color Across Bands</span>
+            </span>
+            <span id="badgeCol" style="font-size:0.68rem; font-family:monospace; color:var(--text-secondary)">Uniform</span>
+          </label>
+          <div id="panelColVary" style="display:none; flex-direction:column; gap:4px; margin-top:4px;">
+            <div class="param-label-row">
+              <span class="param-label">Palette:</span>
+              <select id="selColPalette" style="width:170px;">
+                <option value="chroma-isolum">Isoluminant Chromatic</option>
+                <option value="spectral">Spectral / Rainbow</option>
+                <option value="opponent">Opponent Blue-Yellow / Red-Green</option>
+                <option value="warm-cool">Warm - Cool Transition</option>
+              </select>
+            </div>
+          </div>
+          <div id="panelColConst" style="display:flex; margin-top:4px;" class="param-label-row">
+            <span class="param-label">Base Color:</span>
+            <select id="selConstCol" style="width:170px;">
+              <option value="white">Achromatic White / Gray</option>
+              <option value="cyan">Monochrome Cyan</option>
+              <option value="amber">Monochrome Amber</option>
+              <option value="green">Monochrome Green</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Texton Grid & Contour Overlays -->
+        <div style="border-top:1px solid rgba(255,255,255,0.06); padding-top:6px;" class="param-row">
+          <div class="param-label-row">
+            <span class="param-label">Texton Density:</span>
+            <span class="param-value" id="valDensity">Medium (28)</span>
+          </div>
+          <input type="range" id="paramDensity" min="16" max="42" step="2" value="28">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px; font-size:0.72rem;">
+            <label style="display:flex; align-items:center; gap:4px; cursor:pointer;">
+              <input type="checkbox" id="chkShowContours" checked>
+              <span>Overlay Isoluminance Contours</span>
+            </label>
+            <label style="display:flex; align-items:center; gap:4px; cursor:pointer;">
+              <input type="checkbox" id="chkRandomPhase" checked>
+              <span>Random Phase</span>
+            </label>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Card 6: Spatial Envelope -->
+      <div class="section-card">
+        <div class="section-header">
+          <span class="section-title">Spatial Envelope</span>
+          <button class="btn-reset-sm" data-reset="envelope">Reset</button>
+        </div>
+        <div class="param-row">
+          <div class="param-label-row">
+            <span class="param-label">Gaussian Sigma (&sigma;):</span>
+            <span class="param-value" id="valSigma">&infin; (Unbounded)</span>
+          </div>
+          <input type="range" id="paramSigma" min="15" max="150" value="150">
+          <div class="snap-group">
+            <button class="snap-pill" data-sigma="30">Tight (30)</button>
+            <button class="snap-pill" data-sigma="55">Medium (55)</button>
+            <button class="snap-pill active" data-sigma="150">Unbounded (&infin;)</button>
+          </div>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- Center Stage / Canvas -->
+    <main class="stage">
+      <div class="stage-toolbar">
+        <div style="display:flex; align-items:center; gap:8px; font-size:0.75rem;">
+          <span>Dimensions:</span>
+          <select id="selDimensions">
+            <option value="512x512" selected>512 &times; 512</option>
+            <option value="600x600">600 &times; 600</option>
+            <option value="768x768">768 &times; 768</option>
+          </select>
+        </div>
+        <div style="display:flex; gap:10px; font-size:0.75rem;">
+          <label style="display:flex; align-items:center; gap:4px; cursor:pointer;">
+            <input type="checkbox" id="chkCrosshairs" checked>
+            <span>Crosshairs</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="canvas-container" id="canvasContainer">
+        <!-- Single Blended View -->
+        <canvas id="blendCanvas" width="512" height="512"></canvas>
+
+        <!-- 3-Panel Decomposition View -->
+        <div class="decomp-view" id="decompContainer">
+          <div class="decomp-card">
+            <span style="font-size:0.75rem; font-weight:700; color:var(--wave1-color)">1. Plaid Signal</span>
+            <canvas id="canvasPlaidPart" width="240" height="240"></canvas>
+          </div>
+          <span style="font-size:1.4rem; font-weight:700; color:var(--text-secondary)">+</span>
+          <div class="decomp-card">
+            <span id="labelDecompTexture" style="font-size:0.75rem; font-weight:700; color:var(--texture-color)">2. Isoluminance Texture</span>
+            <canvas id="canvasTexturePart" width="240" height="240"></canvas>
+          </div>
+          <span style="font-size:1.4rem; font-weight:700; color:var(--accent)">=</span>
+          <div class="decomp-card">
+            <span style="font-size:0.75rem; font-weight:700; color:var(--accent)">3. Weighted Blend</span>
+            <canvas id="canvasBlendPart" width="240" height="240"></canvas>
+          </div>
+        </div>
+
+        <!-- Cursor HUD -->
+        <div class="cursor-hud" id="cursorHud">
+          <span>(X, Y): <b id="hudPos">0, 0</b></span>
+          <span>Plaid: <b id="hudPlaid">0.50</b></span>
+          <span>Band: <b id="hudBand">B1</b></span>
+          <span>&theta;: <b id="hudOri">0&deg;</b></span>
+          <span>Blend RGB: <b id="hudRGB">128, 128, 128</b></span>
+        </div>
+      </div>
+    </main>
+
+    <!-- Right Analysis Sidebar -->
+    <aside class="analysis-pane">
+
+      <!-- Math Equation Summary -->
+      <div class="section-card">
+        <div class="section-title">Isoluminance Blend Model</div>
+        <p style="font-size:0.72rem; line-height:1.45; color:var(--text-secondary); font-family:monospace;">
+          I(x,y) = clip[ <b style="color:var(--accent)">w<sub>P</sub></b>&middot;Plaid(x,y) + <b style="color:var(--texture-color)">w<sub>T</sub></b>&middot;T(x &minus; &Delta;x, y &minus; &Delta;y), 0, 1 ]
+          <br><br>
+          <span style="color:var(--accent)">Plaid(x,y) = 0.5 [ 1 + env &middot; C<sub>plaid</sub> (C<sub>1</sub>cos(&omega;<sub>1</sub>x') + C<sub>2</sub>cos(&omega;<sub>2</sub>x')) ]</span><br><br>
+          <span style="color:var(--texture-color)">T(x,y) &isin; Band<sub>k</sub> &hArr; T<sub>k-1</sub> &le; Plaid(x,y) &lt; T<sub>k</sub></span><br>
+          Relative Shift: (&Delta;x, &Delta;y)
+        </p>
+      </div>
+
+      <!-- Live Band Parameters Legend -->
+      <div class="section-card">
+        <div class="section-title">Active Band Profiles</div>
+        <div id="bandLegendGrid" style="display:grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap:4px; font-size:0.68rem; text-align:center; font-family:monospace;">
+          <!-- Dynamically Populated -->
+        </div>
+      </div>
+
+      <!-- 1D Profile Plot -->
+      <div class="section-card">
+        <div class="section-title">1D Profile Slice (Row y = 0)</div>
+        <div class="analysis-box">
+          <div class="analysis-header">
+            <span>Waveform Across Center</span>
+            <span id="profileStats" style="color:var(--accent)">Peak: 1.00</span>
+          </div>
+          <canvas id="profileCanvas" class="analysis-canvas" width="308" height="120"></canvas>
+        </div>
+        <div style="display:flex; justify-content:space-between; font-size:0.68rem; color:var(--text-secondary);">
+          <span style="display:flex; align-items:center; gap:4px;"><span style="width:8px;height:8px;background:var(--accent);border-radius:50%;"></span>Blended Waveform</span>
+          <span style="display:flex; align-items:center; gap:4px;"><span style="width:8px;height:8px;background:rgba(56,189,248,0.4);border-radius:50%;"></span>Plaid Reference</span>
+        </div>
+      </div>
+
+      <!-- 2D Fourier Spectrum (FFT) -->
+      <div class="section-card">
+        <div class="section-title">2D Fourier Spectrum (FFT)</div>
+        <div class="analysis-box">
+          <div class="analysis-header">
+            <span>Power Spectrum |k<sub>x</sub>, k<sub>y</sub>|</span>
+            <span style="color:var(--accent)">Plaid + Texture</span>
+          </div>
+          <canvas id="fftCanvas" class="analysis-canvas" width="308" height="150"></canvas>
+        </div>
+        <p style="font-size:0.7rem; color:var(--text-secondary); line-height:1.35;">
+          The orthogonal plaid vectors form sharp conjugate peaks, surrounded by the orientation-tuned spectral lobes of the isoluminance textons.
+        </p>
+      </div>
+
+      <!-- Stimulus Diagnostics Table -->
+      <div class="section-card">
+        <div class="section-title">Stimulus Diagnostics</div>
+        <div style="display:flex; flex-direction:column; gap:5px; font-size:0.74rem; font-family:monospace;">
+          <div style="display:flex; justify-content:space-between;">
+            <span style="color:var(--text-secondary)">Plaid Weight (wP):</span>
+            <span id="diagWP" style="color:var(--accent)">0.50</span>
+          </div>
+          <div style="display:flex; justify-content:space-between;">
+            <span style="color:var(--text-secondary)">Texture Weight (wT):</span>
+            <span id="diagWT" style="color:var(--texture-color)">0.50</span>
+          </div>
+          <div style="display:flex; justify-content:space-between;">
+            <span style="color:var(--text-secondary)">Spatial Layout:</span>
+            <span id="diagArrangement" style="color:#22c55e">Isoluminance-Aligned</span>
+          </div>
+          <div style="display:flex; justify-content:space-between;">
+            <span style="color:var(--text-secondary)">Relative Shift:</span>
+            <span id="diagShift" style="color:var(--accent)">(&Delta;x: 0, &Delta;y: 0)</span>
+          </div>
+          <div style="display:flex; justify-content:space-between;">
+            <span style="color:var(--text-secondary)">Active Cues:</span>
+            <span id="diagCues" style="color:#22c55e">Orientation Only</span>
+          </div>
+        </div>
+      </div>
+
+    </aside>
+
+  </div>
+
+  <!-- Python Code Export Modal -->
+  <div class="modal-backdrop" id="codeModal">
+    <div class="modal-content">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h3 style="font-size:1rem; font-weight:700;">Reproducible Python Psychophysics Code</h3>
+        <button id="btnCloseModal" style="background:transparent; border:none; color:var(--text-secondary); font-size:1.2rem; cursor:pointer;">&times;</button>
+      </div>
+      <pre id="codeSnippet" style="background:#090d16; border:1px solid var(--border-color); border-radius:8px; padding:12px; font-size:0.72rem; overflow-x:auto; font-family:monospace; color:#38bdf8;"></pre>
+      <div style="display:flex; justify-content:flex-end; gap:8px;">
+        <button id="btnCopyCode" class="btn btn-primary">Copy Code</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- Application State ---
+    const state = {
+      width: 512,
+      height: 512,
+      viewMode: 'blend', // 'blend' | 'decomp'
+
+      // Master Weights
+      wPlaid: 0.50,
+      wTexture: 0.50,
+      plaidContrast: 1.0,
+
+      // Relative Spatial Shift
+      shiftX: 0,
+      shiftY: 0,
+      periodicWrap: true,
+
+      // Control Pattern Mode
+      randomMixtureControl: false,
+      mixtureSeed: 1960,
+
+      // Plaid Component 1
+      c1: 0.50,
+      freq1: 6.0,
+      theta1Deg: 45.0,
+      phase1Deg: 0.0,
+
+      // Plaid Component 2 (Orthogonal)
+      c2: 0.50,
+      freq2: 6.0,
+      theta2Deg: 135.0,
+      phase2Deg: 0.0,
+      lockOrthogonal: true,
+
+      // Envelope
+      sigma: 150.0,
+
+      // Isoluminance Texture State
+      textureMode: 'gabor', // 'gabor' | 'continuous' | 'bands'
+      numBands: 5,
+      varyOrientation: true,
+      oriScheme: 'ortho',   // 'ortho' | 'stepped' | 'tangent'
+      oriJitterDeg: 10.0,
+      constOriDeg: 0.0,
+
+      varyFrequency: false,
+      freqGrad: 'divergent', // 'divergent' | 'monotonic' | 'alternating'
+      constFreq: 18.0,
+
+      varyColor: false,
+      colPalette: 'chroma-isolum',
+      constCol: 'white',
+
+      density: 28,
+      randomPhase: true,
+      showContours: true,
+      showCrosshairs: true
+    };
+
+    // Color Palettes
+    const PALETTES = {
+      'chroma-isolum': [
+        { r: 244, g: 63,  b: 94  }, // Rose
+        { r: 245, g: 158, b: 11  }, // Amber
+        { r: 16,  g: 185, b: 129 }, // Emerald
+        { r: 6,   g: 182, b: 212 }, // Cyan
+        { r: 99,  g: 102, b: 241 }, // Indigo
+        { r: 168, g: 85,  b: 247 }, // Purple
+        { r: 236, g: 72,  b: 153 }, // Pink
+        { r: 234, g: 179, b: 8   }, // Yellow
+        { r: 34,  g: 197, b: 94  }  // Lime
+      ],
+      'spectral': [
+        { r: 168, g: 85,  b: 247 },
+        { r: 59,  g: 130, b: 246 },
+        { r: 20,  g: 184, b: 166 },
+        { r: 34,  g: 197, b: 94  },
+        { r: 234, g: 179, b: 8   },
+        { r: 249, g: 115, b: 22  },
+        { r: 239, g: 68,  b: 68  },
+        { r: 217, g: 70,  b: 239 },
+        { r: 99,  g: 102, b: 241 }
+      ],
+      'opponent': [
+        { r: 59,  g: 130, b: 246 }, // Blue
+        { r: 234, g: 179, b: 8   }, // Yellow
+        { r: 239, g: 68,  b: 68  }, // Red
+        { r: 34,  g: 197, b: 94  }, // Green
+        { r: 59,  g: 130, b: 246 },
+        { r: 234, g: 179, b: 8   }
+      ],
+      'warm-cool': [
+        { r: 239, g: 68,  b: 68  },
+        { r: 249, g: 115, b: 22  },
+        { r: 234, g: 179, b: 8   },
+        { r: 20,  g: 184, b: 166 },
+        { r: 59,  g: 130, b: 246 },
+        { r: 99,  g: 102, b: 241 },
+        { r: 168, g: 85,  b: 247 }
+      ]
+    };
+
+    const CONST_COLORS = {
+      'white': { r: 225, g: 225, b: 225 },
+      'cyan':  { r: 56,  g: 189, b: 248 },
+      'amber': { r: 251, g: 191, b: 36  },
+      'green': { r: 52,  g: 211, b: 153 }
+    };
+
+    // Canvas & Context References
+    const blendCanvas = document.getElementById('blendCanvas');
+    const blendCtx = blendCanvas.getContext('2d', { willReadFrequently: true });
+
+    const decompContainer = document.getElementById('decompContainer');
+    const canvasPlaidPart = document.getElementById('canvasPlaidPart');
+    const ctxPlaidPart = canvasPlaidPart.getContext('2d');
+    const canvasTexturePart = document.getElementById('canvasTexturePart');
+    const ctxTexturePart = canvasTexturePart.getContext('2d');
+    const canvasBlendPart = document.getElementById('canvasBlendPart');
+    const ctxBlendPart = canvasBlendPart.getContext('2d');
+
+    const profileCanvas = document.getElementById('profileCanvas');
+    const profileCtx = profileCanvas.getContext('2d');
+    const fftCanvas = document.getElementById('fftCanvas');
+    const fftCtx = fftCanvas.getContext('2d');
+
+    // Cached raw arrays for cursor HUD & 1D profile
+    let rawPlaid = null;
+    let rawBlend = null;
+    let rawBands = null;
+
+    function getPlaidLambda() {
+      return state.width / Math.max(0.5, state.freq1);
+    }
+
+    // --- Dynamic Band Properties Calculation ---
+    function getBandProperties() {
+      const num = state.numBands;
+      const palette = PALETTES[state.colPalette] || PALETTES['chroma-isolum'];
+      const baseCol = CONST_COLORS[state.constCol] || CONST_COLORS['white'];
+      const constAngleRad = (state.constOriDeg * Math.PI) / 180;
+      const bands = [];
+
+      for (let k = 0; k < num; k++) {
+        const tLow = k / num;
+        const tHigh = (k + 1) / num;
+        const tMid = 0.5 * (tLow + tHigh);
+
+        const col = state.varyColor ? palette[k % palette.length] : baseCol;
+
+        let sf;
+        if (state.varyFrequency) {
+          if (state.freqGrad === 'divergent') {
+            sf = 12 + 24 * Math.abs(tMid - 0.5) * 2;
+          } else if (state.freqGrad === 'monotonic') {
+            sf = 10 + (k / (num - 1)) * 26;
+          } else {
+            sf = (k % 2 === 0) ? 12 : 28;
+          }
+        } else {
+          sf = state.constFreq;
+        }
+
+        let avgAngle;
+        let isTangent = false;
+        if (state.varyOrientation) {
+          if (state.oriScheme === 'ortho') {
+            avgAngle = (k % 2 === 0) ? 0 : Math.PI / 2;
+          } else if (state.oriScheme === 'stepped') {
+            avgAngle = (k / num) * Math.PI;
+          } else {
+            isTangent = true;
+            avgAngle = 0;
+          }
+        } else {
+          avgAngle = constAngleRad;
+        }
+
+        bands.push({ k, tLow, tHigh, tMid, col, sf, avgAngle, isTangent });
+      }
+      return bands;
+    }
+
+    // --- Main Plaid Field Computation ---
+    function computePlaidField(W, H) {
+      const plaid = new Float32Array(W * H);
+      const k1 = 2 * Math.PI * (state.freq1 / state.width);
+      const k2 = 2 * Math.PI * (state.freq2 / state.width);
+      const th1 = (state.theta1Deg * Math.PI) / 180;
+      const th2 = (state.theta2Deg * Math.PI) / 180;
+      const cos1 = Math.cos(th1), sin1 = Math.sin(th1);
+      const cos2 = Math.cos(th2), sin2 = Math.sin(th2);
+      const ph1 = (state.phase1Deg * Math.PI) / 180;
+      const ph2 = (state.phase2Deg * Math.PI) / 180;
+
+      const halfW = W / 2.0;
+      const halfH = H / 2.0;
+      const sigSq2 = 2.0 * state.sigma * state.sigma;
+      const useEnv = state.sigma < 140.0;
+
+      let idx = 0;
+      for (let y = 0; y < H; y++) {
+        const ny = y - halfH;
+        for (let x = 0; x < W; x++) {
+          const nx = x - halfW;
+
+          const u1 = nx * cos1 + ny * sin1;
+          const u2 = nx * cos2 + ny * sin2;
+
+          const cWave1 = Math.cos(k1 * u1 + ph1);
+          const cWave2 = Math.cos(k2 * u2 + ph2);
+
+          let env = 1.0;
+          if (useEnv) {
+            env = Math.exp(-(nx * nx + ny * ny) / sigSq2);
+          }
+
+          const raw = 0.5 * (1.0 + env * state.plaidContrast * (state.c1 * cWave1 + state.c2 * cWave2));
+          plaid[idx++] = Math.max(0.0, Math.min(1.0, raw));
+        }
+      }
+      return plaid;
+    }
+
+    // --- Main Rendering Pipeline ---
+    function render() {
+      const W = state.width;
+      const H = state.height;
+
+      blendCanvas.width = W;
+      blendCanvas.height = H;
+
+      rawPlaid = computePlaidField(W, H);
+      rawBlend = new Float32Array(W * H);
+      rawBands = new Int8Array(W * H);
+
+      const bands = getBandProperties();
+      updateBandLegendUI(bands);
+
+      // Render Base Texture Field (T0 before shift)
+      const baseTexData = ctxTexturePart.createImageData(W, H);
+      const baseTexBuf = baseTexData.data;
+
+      if (state.textureMode === 'continuous') {
+        renderContinuousTexture(baseTexBuf, rawPlaid, bands, W, H);
+      } else if (state.textureMode === 'bands') {
+        renderBandsTexture(baseTexBuf, rawPlaid, bands, W, H);
+      } else {
+        renderGaborTextonTexture(baseTexBuf, rawPlaid, bands, W, H);
+      }
+
+      // Apply Relative Spatial Shift (dx, dy)
+      const dx = state.shiftX;
+      const dy = state.shiftY;
+      const wrap = state.periodicWrap;
+
+      const shiftedTexData = ctxTexturePart.createImageData(W, H);
+      const shiftedTexBuf = shiftedTexData.data;
+
+      for (let y = 0; y < H; y++) {
+        let srcY = y - dy;
+        if (wrap) {
+          srcY = ((srcY % H) + H) % H;
+        } else {
+          srcY = Math.max(0, Math.min(H - 1, srcY));
+        }
+
+        for (let x = 0; x < W; x++) {
+          let srcX = x - dx;
+          if (wrap) {
+            srcX = ((srcX % W) + W) % W;
+          } else {
+            srcX = Math.max(0, Math.min(W - 1, srcX));
+          }
+
+          const dstIdx = (y * W + x) * 4;
+          const srcIdx = (srcY * W + srcX) * 4;
+
+          shiftedTexBuf[dstIdx] = baseTexBuf[srcIdx];
+          shiftedTexBuf[dstIdx + 1] = baseTexBuf[srcIdx + 1];
+          shiftedTexBuf[dstIdx + 2] = baseTexBuf[srcIdx + 2];
+          shiftedTexBuf[dstIdx + 3] = 255;
+        }
+      }
+
+      // Blend Plaid + Shifted Texture
+      const blendImg = blendCtx.createImageData(W, H);
+      const blendBuf = blendImg.data;
+      const wP = state.wPlaid;
+      const wT = state.wTexture;
+
+      for (let i = 0; i < W * H; i++) {
+        const pLum = rawPlaid[i];
+        const pR = pLum, pG = pLum, pB = pLum;
+
+        const tR = shiftedTexBuf[i * 4] / 255.0;
+        const tG = shiftedTexBuf[i * 4 + 1] / 255.0;
+        const tB = shiftedTexBuf[i * 4 + 2] / 255.0;
+
+        const bR = Math.min(1.0, Math.max(0.0, wP * pR + wT * tR));
+        const bG = Math.min(1.0, Math.max(0.0, wP * pG + wT * tG));
+        const bB = Math.min(1.0, Math.max(0.0, wP * pB + wT * tB));
+
+        rawBlend[i] = 0.299 * bR + 0.587 * bG + 0.114 * bB;
+
+        blendBuf[i * 4] = Math.round(bR * 255);
+        blendBuf[i * 4 + 1] = Math.round(bG * 255);
+        blendBuf[i * 4 + 2] = Math.round(bB * 255);
+        blendBuf[i * 4 + 3] = 255;
+      }
+
+      blendCtx.putImageData(blendImg, 0, 0);
+
+      // Overlay Isoluminance Contours (only when aligned to plaid)
+      if (state.showContours && state.textureMode !== 'bands' && !state.randomMixtureControl) {
+        drawIsoluminanceContours(blendCtx, rawPlaid, bands, W, H);
+      }
+
+      // Overlay Crosshairs
+      if (state.showCrosshairs) {
+        blendCtx.strokeStyle = 'rgba(56, 189, 248, 0.35)';
+        blendCtx.lineWidth = 1;
+        blendCtx.setLineDash([4, 4]);
+        blendCtx.beginPath();
+        blendCtx.moveTo(W / 2, 0); blendCtx.lineTo(W / 2, H);
+        blendCtx.moveTo(0, H / 2); blendCtx.lineTo(W, H / 2);
+        blendCtx.stroke();
+        blendCtx.setLineDash([]);
+      }
+
+      // Update 3-Panel Decomposition
+      if (state.viewMode === 'decomp') {
+        updateDecompositionCanvases(shiftedTexData, W, H);
+      }
+
+      // Update Diagnostics & Plots
+      render1DProfile(W, H);
+      render2DFFT(W, H);
+      updateDiagnosticsUI();
+    }
+
+    // --- Texture Generator Implementations ---
+    function renderContinuousTexture(buf, plaid, bands, W, H) {
+      const halfW = W / 2.0;
+      const halfH = H / 2.0;
+      const isMix = state.randomMixtureControl;
+      const mixCell = Math.max(12, Math.round(W / state.density));
+
+      for (let y = 0; y < H; y++) {
+        const ny = (y - halfH) / W;
+        for (let x = 0; x < W; x++) {
+          const nx = (x - halfW) / W;
+          const idx = y * W + x;
+
+          let band;
+          if (isMix) {
+            const cx = Math.floor(x / mixCell);
+            const cy = Math.floor(y / mixCell);
+            const cellSeed = (cy * 19349663 + cx * 83492791 + state.mixtureSeed) ^ 0x5bf03635;
+            const randK = Math.abs(cellSeed % bands.length);
+            band = bands[randK];
+          } else {
+            const pVal = plaid[idx];
+            band = bands[bands.length - 1];
+            for (let b of bands) {
+              if (pVal < b.tHigh) { band = b; break; }
+            }
+          }
+          rawBands[idx] = band.k;
+
+          let theta = band.avgAngle;
+          if (band.isTangent && !isMix) {
+            const gx = (plaid[y * W + Math.min(W - 1, x + 1)] - plaid[y * W + Math.max(0, x - 1)]);
+            const gy = (plaid[Math.min(H - 1, y + 1) * W + x] - plaid[Math.max(0, y - 1) * W + x]);
+            theta = Math.atan2(gy, gx) + Math.PI / 2;
+          }
+
+          const carrier = Math.cos(2 * Math.PI * band.sf * (nx * Math.cos(theta) + ny * Math.sin(theta)));
+          const intensity = 0.5 + 0.45 * carrier;
+
+          buf[idx * 4] = Math.round(band.col.r * intensity);
+          buf[idx * 4 + 1] = Math.round(band.col.g * intensity);
+          buf[idx * 4 + 2] = Math.round(band.col.b * intensity);
+          buf[idx * 4 + 3] = 255;
+        }
+      }
+    }
+
+    function renderBandsTexture(buf, plaid, bands, W, H) {
+      const isMix = state.randomMixtureControl;
+      const mixCell = Math.max(12, Math.round(W / state.density));
+
+      for (let y = 0; y < H; y++) {
+        for (let x = 0; x < W; x++) {
+          const i = y * W + x;
+          let band;
+          if (isMix) {
+            const cx = Math.floor(x / mixCell);
+            const cy = Math.floor(y / mixCell);
+            const cellSeed = (cy * 19349663 + cx * 83492791 + state.mixtureSeed) ^ 0x5bf03635;
+            const randK = Math.abs(cellSeed % bands.length);
+            band = bands[randK];
+          } else {
+            const pVal = plaid[i];
+            band = bands[bands.length - 1];
+            for (let b of bands) {
+              if (pVal < b.tHigh) { band = b; break; }
+            }
+          }
+          rawBands[i] = band.k;
+          buf[i * 4] = band.col.r;
+          buf[i * 4 + 1] = band.col.g;
+          buf[i * 4 + 2] = band.col.b;
+          buf[i * 4 + 3] = 255;
+        }
+      }
+    }
+
+    function renderGaborTextonTexture(buf, plaid, bands, W, H) {
+      const offCanvas = document.createElement('canvas');
+      offCanvas.width = W;
+      offCanvas.height = H;
+      const offCtx = offCanvas.getContext('2d');
+      offCtx.fillStyle = '#0b0f19';
+      offCtx.fillRect(0, 0, W, H);
+
+      const density = state.density;
+      const step = W / density;
+      const patchR = step * 0.95;
+      const jitterRad = state.varyOrientation ? (state.oriJitterDeg * Math.PI) / 180 : 0;
+      const randomPhase = state.randomPhase;
+      const isMix = state.randomMixtureControl;
+
+      let seed = isMix ? state.mixtureSeed : 1960;
+      function rnd() {
+        seed = (seed * 9301 + 49297) % 233280;
+        return seed / 233280;
+      }
+
+      for (let gy = -1; gy <= density + 1; gy++) {
+        for (let gx = -1; gx <= density + 1; gx++) {
+          const jX = (rnd() - 0.5) * step * 0.45;
+          const jY = (rnd() - 0.5) * step * 0.45;
+          const cx = (gx + (gy % 2) * 0.5) * step + jX;
+          const cy = gy * step + jY;
+
+          if (cx < -patchR || cx > W + patchR || cy < -patchR || cy > H + patchR) continue;
+
+          let band;
+          if (isMix) {
+            const randK = Math.floor(rnd() * bands.length);
+            band = bands[randK];
+          } else {
+            const ix = Math.max(0, Math.min(W - 1, Math.floor(cx)));
+            const iy = Math.max(0, Math.min(H - 1, Math.floor(cy)));
+            const pVal = plaid[iy * W + ix];
+            band = bands[bands.length - 1];
+            for (let b of bands) {
+              if (pVal < b.tHigh) { band = b; break; }
+            }
+          }
+
+          let baseTheta = band.avgAngle;
+          if (band.isTangent && !isMix) {
+            const ix = Math.max(0, Math.min(W - 1, Math.floor(cx)));
+            const iy = Math.max(0, Math.min(H - 1, Math.floor(cy)));
+            const gxVal = (plaid[iy * W + Math.min(W - 1, ix + 1)] - plaid[iy * W + Math.max(0, ix - 1)]);
+            const gyVal = (plaid[Math.min(H - 1, iy + 1) * W + ix] - plaid[Math.max(0, iy - 1) * W + ix]);
+            baseTheta = Math.atan2(gyVal, gxVal) + Math.PI / 2;
+          }
+
+          const textonTheta = baseTheta + (jitterRad > 0 ? (rnd() - 0.5) * 2 * jitterRad : 0);
+          const phase = randomPhase ? rnd() * 2 * Math.PI : 0;
+          const textonFreq = (band.sf / W) * 2.5;
+
+          drawGaborPatch(offCtx, cx, cy, patchR, textonTheta, textonFreq, phase, band.col);
+        }
+      }
+
+      const imgD = offCtx.getImageData(0, 0, W, H);
+      buf.set(imgD.data);
+    }
+
+    function drawGaborPatch(ctx, cx, cy, radius, theta, f, phase, col) {
+      const sigma = radius * 0.38;
+      const twoSigSq = 2 * sigma * sigma;
+      const barSpacing = 1 / (f || 0.05);
+      const numBars = 4;
+
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(theta);
+
+      for (let b = -numBars; b <= numBars; b++) {
+        const u = b * barSpacing + (phase / (2 * Math.PI)) * barSpacing;
+        if (Math.abs(u) > radius) continue;
+
+        const gauss = Math.exp(-(u * u) / twoSigSq);
+        if (gauss < 0.05) continue;
+
+        const barLen = Math.sqrt(Math.max(0, radius * radius - u * u)) * 1.8;
+
+        ctx.strokeStyle = `rgba(${col.r}, ${col.g}, ${col.b}, ${gauss * 0.9})`;
+        ctx.lineWidth = Math.max(1.5, barSpacing * 0.42);
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(u, -barLen * 0.5);
+        ctx.lineTo(u, barLen * 0.5);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    // --- Isoluminance Contours Overlay ---
+    function drawIsoluminanceContours(ctx, plaid, bands, W, H) {
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+      ctx.lineWidth = 1.0;
+      ctx.setLineDash([3, 3]);
+
+      const RES = 80;
+      const step = W / (RES - 1);
+      const g = new Float32Array(RES * RES);
+
+      for (let j = 0; j < RES; j++) {
+        const sy = Math.floor((j / (RES - 1)) * (H - 1));
+        for (let i = 0; i < RES; i++) {
+          const sx = Math.floor((i / (RES - 1)) * (W - 1));
+          g[j * RES + i] = plaid[sy * W + sx];
+        }
+      }
+
+      for (let b = 0; b < bands.length - 1; b++) {
+        const level = bands[b].tHigh;
+        ctx.beginPath();
+        for (let j = 0; j < RES - 1; j++) {
+          const y0 = j * step, y1 = (j + 1) * step;
+          for (let i = 0; i < RES - 1; i++) {
+            const x0 = i * step, x1 = (i + 1) * step;
+            const v0 = g[j * RES + i], v1 = g[j * RES + i + 1];
+            const v2 = g[(j + 1) * RES + i + 1], v3 = g[(j + 1) * RES + i];
+
+            let m = 0;
+            if (v0 >= level) m |= 1;
+            if (v1 >= level) m |= 2;
+            if (v2 >= level) m |= 4;
+            if (v3 >= level) m |= 8;
+            if (m === 0 || m === 15) continue;
+
+            const t = (va, vb) => Math.max(0, Math.min(1, (level - va) / (vb - va || 1e-6)));
+            const pTop = [x0 + t(v0, v1) * step, y0];
+            const pRight = [x1, y0 + t(v1, v2) * step];
+            const pBottom = [x0 + (1 - t(v2, v3)) * step, y1];
+            const pLeft = [x0, y0 + (1 - t(v3, v0)) * step];
+
+            const drawLine = (p1, p2) => {
+              ctx.moveTo(p1[0], p1[1]);
+              ctx.lineTo(p2[0], p2[1]);
+            };
+
+            if (m === 1 || m === 14) drawLine(pLeft, pTop);
+            else if (m === 2 || m === 13) drawLine(pTop, pRight);
+            else if (m === 3 || m === 12) drawLine(pLeft, pRight);
+            else if (m === 4 || m === 11) drawLine(pRight, pBottom);
+            else if (m === 6 || m === 9) drawLine(pTop, pBottom);
+            else if (m === 7 || m === 8) drawLine(pLeft, pBottom);
+          }
+        }
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    // --- 3-Panel Decomposition View Update ---
+    function updateDecompositionCanvases(shiftedTexData, W, H) {
+      // 1. Plaid Part
+      const imgP = ctxPlaidPart.createImageData(240, 240);
+      const bufP = imgP.data;
+      for (let y = 0; y < 240; y++) {
+        const sy = Math.floor((y / 240) * H);
+        for (let x = 0; x < 240; x++) {
+          const sx = Math.floor((x / 240) * W);
+          const lum = Math.round(rawPlaid[sy * W + sx] * 255);
+          const idx = (y * 240 + x) * 4;
+          bufP[idx] = lum; bufP[idx + 1] = lum; bufP[idx + 2] = lum; bufP[idx + 3] = 255;
+        }
+      }
+      ctxPlaidPart.putImageData(imgP, 0, 0);
+
+      // 2. Texture Part (Shifted or Mixture)
+      const offT = document.createElement('canvas');
+      offT.width = W; offT.height = H;
+      offT.getContext('2d').putImageData(shiftedTexData, 0, 0);
+      ctxTexturePart.drawImage(offT, 0, 0, 240, 240);
+
+      // Label update
+      document.getElementById('labelDecompTexture').textContent = state.randomMixtureControl
+        ? "2. Random Mixture Control"
+        : (state.shiftX !== 0 || state.shiftY !== 0 ? "2. Shifted Isoluminance Texture" : "2. Isoluminance Texture");
+
+      // 3. Blend Part
+      ctxBlendPart.drawImage(blendCanvas, 0, 0, 240, 240);
+    }
+
+    // --- 1D Center Row Profile Slice ---
+    function render1DProfile(W, H) {
+      const pW = profileCanvas.width;
+      const pH = profileCanvas.height;
+      profileCtx.clearRect(0, 0, pW, pH);
+
+      profileCtx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+      profileCtx.lineWidth = 1;
+      profileCtx.beginPath();
+      for (let y = 20; y < pH; y += 25) {
+        profileCtx.moveTo(0, y); profileCtx.lineTo(pW, y);
+      }
+      profileCtx.stroke();
+
+      const centerY = Math.floor(H / 2);
+
+      // Plaid Reference (Dotted)
+      profileCtx.strokeStyle = 'rgba(56, 189, 248, 0.4)';
+      profileCtx.lineWidth = 1;
+      profileCtx.setLineDash([2, 2]);
+      profileCtx.beginPath();
+      for (let i = 0; i < pW; i++) {
+        const sx = Math.floor((i / pW) * W);
+        const val = rawPlaid ? rawPlaid[centerY * W + sx] : 0.5;
+        const py = pH * (1.0 - val);
+        if (i === 0) profileCtx.moveTo(i, py); else profileCtx.lineTo(i, py);
+      }
+      profileCtx.stroke();
+      profileCtx.setLineDash([]);
+
+      // Blended Waveform (Cyan)
+      profileCtx.strokeStyle = '#38bdf8';
+      profileCtx.lineWidth = 1.8;
+      profileCtx.beginPath();
+      for (let i = 0; i < pW; i++) {
+        const sx = Math.floor((i / pW) * W);
+        const val = rawBlend ? rawBlend[centerY * W + sx] : 0.5;
+        const py = pH * (1.0 - val);
+        if (i === 0) profileCtx.moveTo(i, py); else profileCtx.lineTo(i, py);
+      }
+      profileCtx.stroke();
+    }
+
+    // --- 2D Fourier Spectrum (FFT) ---
+    function render2DFFT(W_ref, H_ref) {
+      const W = fftCanvas.width;
+      const H = fftCanvas.height;
+      const imgD = fftCtx.createImageData(W, H);
+      const data32 = new Uint32Array(imgD.data.buffer);
+
+      const maxR = W * 0.42;
+      const th1 = (state.theta1Deg * Math.PI) / 180.0;
+      const k1Dist = Math.min(1.0, state.freq1 / 24.0) * maxR;
+      const kx1 = k1Dist * Math.cos(th1);
+      const ky1 = k1Dist * Math.sin(th1);
+
+      const th2 = (state.theta2Deg * Math.PI) / 180.0;
+      const k2Dist = Math.min(1.0, state.freq2 / 24.0) * maxR;
+      const kx2 = k2Dist * Math.cos(th2);
+      const ky2 = k2Dist * Math.sin(th2);
+
+      const sigmaF = Math.max(3.0, (120.0 / state.sigma) * 2.2);
+      const twoSigFSq = 2.0 * sigmaF * sigmaF;
+      const halfW = W / 2.0;
+      const halfH = H / 2.0;
+
+      const wP = state.wPlaid;
+      const wT = state.wTexture;
+
+      let idx = 0;
+      for (let y = 0; y < H; y++) {
+        const dy = y - halfH;
+        for (let x = 0; x < W; x++) {
+          const dx = x - halfW;
+
+          // Wave 1 peaks
+          const d1_1 = (dx - kx1)**2 + (dy - ky1)**2;
+          const d1_2 = (dx + kx1)**2 + (dy + ky1)**2;
+          const g1 = (Math.exp(-d1_1 / twoSigFSq) + Math.exp(-d1_2 / twoSigFSq)) * state.c1;
+
+          // Wave 2 peaks
+          const d2_1 = (dx - kx2)**2 + (dy - ky2)**2;
+          const d2_2 = (dx + kx2)**2 + (dy + ky2)**2;
+          const g2 = (Math.exp(-d2_1 / twoSigFSq) + Math.exp(-d2_2 / twoSigFSq)) * state.c2;
+
+          const plaidPwr = (g1 + g2) * wP * 1.5;
+
+          const rDist = Math.sqrt(dx * dx + dy * dy);
+          const textonPeakDist = Math.min(1.0, state.constFreq / 30.0) * maxR;
+          const radialGaussian = Math.exp(-((rDist - textonPeakDist)**2) / 60.0);
+          const texPwr = radialGaussian * wT * 0.7;
+
+          const dc = 0.2 * Math.exp(-(dx*dx + dy*dy) / 16.0);
+          const power = Math.min(1.0, plaidPwr + texPwr + dc);
+          const intensity = Math.round(Math.pow(power, 0.45) * 255.0);
+
+          const r = Math.min(255, Math.round(intensity * 1.4));
+          const g = Math.min(255, Math.round(intensity * (plaidPwr > texPwr ? 1.4 : 0.8)));
+          const b = Math.min(255, Math.round(intensity * 2.1));
+
+          data32[idx++] = (255 << 24) | (b << 16) | (g << 8) | r;
+        }
+      }
+
+      fftCtx.putImageData(imgD, 0, 0);
+
+      fftCtx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+      fftCtx.lineWidth = 1;
+      fftCtx.beginPath();
+      fftCtx.moveTo(halfW, 0); fftCtx.lineTo(halfW, H);
+      fftCtx.moveTo(0, halfH); fftCtx.lineTo(W, halfH);
+      fftCtx.stroke();
+    }
+
+    // --- UI Update Helpers ---
+    function updateBandLegendUI(bands) {
+      const grid = document.getElementById('bandLegendGrid');
+      grid.innerHTML = '';
+      grid.style.gridTemplateColumns = `repeat(${bands.length}, minmax(0, 1fr))`;
+
+      bands.forEach((b, i) => {
+        const div = document.createElement('div');
+        div.className = "flex flex-col items-center p-1 rounded bg-[var(--card)] border border-[var(--border-color)]";
+        const deg = b.isTangent ? '&perp;' : `${Math.round((b.avgAngle * 180) / Math.PI)}&deg;`;
+        const colHex = `rgb(${b.col.r}, ${b.col.g}, ${b.col.b})`;
+        div.innerHTML = `
+          <div style="width:10px; height:10px; border-radius:50%; background-color:${colHex}; margin-bottom:2px;"></div>
+          <span style="font-weight:700; font-size:0.65rem;">B${i+1}</span>
+          <span style="color:var(--text-secondary); font-size:0.6rem;">${deg}</span>
+          <span style="color:var(--text-secondary); font-size:0.6rem;">${Math.round(b.sf)}cy</span>
+        `;
+        grid.appendChild(div);
+      });
+    }
+
+    function updateDiagnosticsUI() {
+      document.getElementById('diagWP').textContent = state.wPlaid.toFixed(2);
+      document.getElementById('diagWT').textContent = state.wTexture.toFixed(2);
+      document.getElementById('diagArrangement').textContent = state.randomMixtureControl ? "Random Mixture Control" : "Isoluminance-Aligned";
+      document.getElementById('diagArrangement').style.color = state.randomMixtureControl ? "#f59e0b" : "#22c55e";
+      document.getElementById('diagShift').textContent = `(Δx: ${state.shiftX}px, Δy: ${state.shiftY}px)`;
+
+      const cues = [];
+      if (state.varyOrientation) cues.push('&theta;');
+      if (state.varyFrequency) cues.push('f');
+      if (state.varyColor) cues.push('C');
+      document.getElementById('diagCues').innerHTML = cues.length > 0 ? cues.join(' + ') : 'Uniform';
+
+      const eps = 1e-4;
+      const strDB = 20.0 * Math.log10(Math.max(eps, state.wPlaid) / Math.max(eps, state.wTexture));
+      document.getElementById('valSNR').textContent = `${strDB.toFixed(1)} dB`;
+    }
+
+    function updateDimensionPanels() {
+      document.getElementById('panelOriVary').style.display = state.varyOrientation ? 'flex' : 'none';
+      document.getElementById('panelOriConst').style.display = state.varyOrientation ? 'none' : 'flex';
+      document.getElementById('badgeOri').textContent = state.varyOrientation ? 'Active' : 'Uniform';
+      document.getElementById('badgeOri').style.color = state.varyOrientation ? '#22c55e' : 'var(--text-secondary)';
+
+      document.getElementById('panelFreqVary').style.display = state.varyFrequency ? 'flex' : 'none';
+      document.getElementById('panelFreqConst').style.display = state.varyFrequency ? 'none' : 'flex';
+      document.getElementById('badgeFreq').textContent = state.varyFrequency ? 'Active' : 'Uniform';
+      document.getElementById('badgeFreq').style.color = state.varyFrequency ? '#22c55e' : 'var(--text-secondary)';
+
+      document.getElementById('panelColVary').style.display = state.varyColor ? 'flex' : 'none';
+      document.getElementById('panelColConst').style.display = state.varyColor ? 'none' : 'flex';
+      document.getElementById('badgeCol').textContent = state.varyColor ? 'Active' : 'Uniform';
+      document.getElementById('badgeCol').style.color = state.varyColor ? '#22c55e' : 'var(--text-secondary)';
+    }
+
+    function updateShiftUI() {
+      const lam = getPlaidLambda();
+      const fracX = (state.shiftX / lam).toFixed(2);
+      const fracY = (state.shiftY / lam).toFixed(2);
+
+      document.getElementById('valShiftX').textContent = `${state.shiftX} px (${fracX} \u03bb)`;
+      document.getElementById('valShiftY').textContent = `${state.shiftY} px (${fracY} \u03bb)`;
+      document.getElementById('paramShiftX').value = state.shiftX;
+      document.getElementById('paramShiftY').value = state.shiftY;
+    }
+
+    // --- Spatial Arrangement Mode Handlers ---
+    const btnArrangementAligned = document.getElementById('btnArrangementAligned');
+    const btnArrangementMixture = document.getElementById('btnArrangementMixture');
+    const badgeArrangement = document.getElementById('badgeArrangement');
+    const panelMixtureControl = document.getElementById('panelMixtureControl');
+    const btnRerollMixture = document.getElementById('btnRerollMixture');
+
+    function setArrangement(isMix) {
+      state.randomMixtureControl = isMix;
+      btnArrangementAligned.classList.toggle('active', !isMix);
+      btnArrangementMixture.classList.toggle('active', isMix);
+      panelMixtureControl.style.display = isMix ? 'flex' : 'none';
+      badgeArrangement.textContent = isMix ? 'Random Mixture Control' : 'Isoluminance-Aligned';
+      badgeArrangement.style.color = isMix ? '#f59e0b' : '#22c55e';
+      render();
+    }
+
+    btnArrangementAligned.addEventListener('click', () => setArrangement(false));
+    btnArrangementMixture.addEventListener('click', () => setArrangement(true));
+
+    btnRerollMixture.addEventListener('click', () => {
+      state.mixtureSeed = Math.floor(Math.random() * 1000000);
+      render();
+    });
+
+    // --- Spatial Shift Event Handlers ---
+    const paramShiftX = document.getElementById('paramShiftX');
+    const paramShiftY = document.getElementById('paramShiftY');
+
+    paramShiftX.addEventListener('input', (e) => {
+      state.shiftX = parseInt(e.target.value, 10);
+      updateShiftUI();
+      render();
+    });
+
+    paramShiftY.addEventListener('input', (e) => {
+      state.shiftY = parseInt(e.target.value, 10);
+      updateShiftUI();
+      render();
+    });
+
+    document.querySelectorAll('.snap-pill[data-shiftx]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.snap-pill[data-shiftx]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const frac = parseFloat(btn.dataset.shiftx);
+        state.shiftX = Math.round(frac * getPlaidLambda());
+        updateShiftUI();
+        render();
+      });
+    });
+
+    document.querySelectorAll('.snap-pill[data-shifty]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.snap-pill[data-shifty]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const frac = parseFloat(btn.dataset.shifty);
+        state.shiftY = Math.round(frac * getPlaidLambda());
+        updateShiftUI();
+        render();
+      });
+    });
+
+    document.getElementById('chkPeriodicWrap').addEventListener('change', (e) => {
+      state.periodicWrap = e.target.checked;
+      render();
+    });
+
+    function resetShift() {
+      state.shiftX = 0;
+      state.shiftY = 0;
+      document.querySelectorAll('.snap-pill[data-shiftx]').forEach(b => b.classList.toggle('active', b.dataset.shiftx === '0'));
+      document.querySelectorAll('.snap-pill[data-shifty]').forEach(b => b.classList.toggle('active', b.dataset.shifty === '0'));
+      updateShiftUI();
+      render();
+    }
+
+    document.getElementById('btnZeroShift').addEventListener('click', resetShift);
+
+    // --- Blend Weights Event Handlers ---
+    const paramBlendAlpha = document.getElementById('paramBlendAlpha');
+    const valBlendAlpha = document.getElementById('valBlendAlpha');
+    const valWeightPlaid = document.getElementById('valWeightPlaid');
+    const valWeightTexture = document.getElementById('valWeightTexture');
+
+    paramBlendAlpha.addEventListener('input', (e) => {
+      const a = parseFloat(e.target.value);
+      state.wTexture = a / 100.0;
+      state.wPlaid = 1.0 - state.wTexture;
+      valBlendAlpha.textContent = a === 50 ? '50% (Equal)' : `${Math.round(a)}%`;
+      valWeightPlaid.textContent = state.wPlaid.toFixed(2);
+      valWeightTexture.textContent = state.wTexture.toFixed(2);
+      render();
+    });
+
+    document.querySelectorAll('.snap-pill[data-alpha]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.snap-pill[data-alpha]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        paramBlendAlpha.value = btn.dataset.alpha;
+        paramBlendAlpha.dispatchEvent(new Event('input'));
+      });
+    });
+
+    // Plaid Contrast
+    const paramPlaidContrast = document.getElementById('paramPlaidContrast');
+    const valPlaidContrast = document.getElementById('valPlaidContrast');
+
+    paramPlaidContrast.addEventListener('input', (e) => {
+      state.plaidContrast = parseFloat(e.target.value) / 100.0;
+      valPlaidContrast.textContent = `${e.target.value}%`;
+      render();
+    });
+
+    document.querySelectorAll('.snap-pill[data-contrast]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.snap-pill[data-contrast]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        paramPlaidContrast.value = btn.dataset.contrast;
+        paramPlaidContrast.dispatchEvent(new Event('input'));
+      });
+    });
+
+    // Master Frequency
+    const paramMasterFreq = document.getElementById('paramMasterFreq');
+    const valMasterFreq = document.getElementById('valMasterFreq');
+
+    paramMasterFreq.addEventListener('input', (e) => {
+      state.freq1 = parseFloat(e.target.value);
+      state.freq2 = state.freq1;
+      valMasterFreq.textContent = `${state.freq1.toFixed(1)} cyc`;
+      updateShiftUI();
+      render();
+    });
+
+    document.querySelectorAll('.snap-pill[data-mf]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.snap-pill[data-mf]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        paramMasterFreq.value = btn.dataset.mf;
+        paramMasterFreq.dispatchEvent(new Event('input'));
+      });
+    });
+
+    // Wave 1 Orientation & Dial
+    const paramTheta1 = document.getElementById('paramTheta1');
+    const valTheta1 = document.getElementById('valTheta1');
+    const dialIndicator1 = document.getElementById('dialIndicator1');
+    const dialWheel1 = document.getElementById('dialWheel1');
+
+    function setTheta1(deg) {
+      state.theta1Deg = deg % 360;
+      paramTheta1.value = state.theta1Deg;
+      valTheta1.textContent = `${state.theta1Deg.toFixed(1)}°`;
+      dialIndicator1.style.transform = `translateY(-50%) rotate(${state.theta1Deg}deg)`;
+
+      if (state.lockOrthogonal) {
+        state.theta2Deg = (state.theta1Deg + 90.0) % 360.0;
+        paramTheta2.value = state.theta2Deg;
+        valTheta2.textContent = `${state.theta2Deg.toFixed(1)}°`;
+      }
+      render();
+    }
+
+    paramTheta1.addEventListener('input', (e) => setTheta1(parseFloat(e.target.value)));
+
+    let isDialDrag = false;
+    dialWheel1.addEventListener('pointerdown', (e) => {
+      isDialDrag = true;
+      dialWheel1.setPointerCapture(e.pointerId);
+      const rect = dialWheel1.getBoundingClientRect();
+      const deg = (Math.atan2(e.clientY - (rect.top + rect.height/2), e.clientX - (rect.left + rect.width/2)) * 180 / Math.PI + 360) % 360;
+      setTheta1(Math.round(deg));
+    });
+    dialWheel1.addEventListener('pointermove', (e) => {
+      if (isDialDrag) {
+        const rect = dialWheel1.getBoundingClientRect();
+        const deg = (Math.atan2(e.clientY - (rect.top + rect.height/2), e.clientX - (rect.left + rect.width/2)) * 180 / Math.PI + 360) % 360;
+        setTheta1(Math.round(deg));
+      }
+    });
+    dialWheel1.addEventListener('pointerup', (e) => {
+      isDialDrag = false;
+      dialWheel1.releasePointerCapture(e.pointerId);
+    });
+
+    // Wave 1 Contrast
+    const paramContrast1 = document.getElementById('paramContrast1');
+    const valContrast1 = document.getElementById('valContrast1');
+    paramContrast1.addEventListener('input', (e) => {
+      state.c1 = parseFloat(e.target.value) / 100.0;
+      valContrast1.textContent = `${e.target.value}%`;
+      render();
+    });
+
+    // Wave 2 Controls
+    const paramTheta2 = document.getElementById('paramTheta2');
+    const valTheta2 = document.getElementById('valTheta2');
+    const chkLockOrthogonal = document.getElementById('chkLockOrthogonal');
+    const paramContrast2 = document.getElementById('paramContrast2');
+    const valContrast2 = document.getElementById('valContrast2');
+
+    paramTheta2.addEventListener('input', (e) => {
+      state.theta2Deg = parseFloat(e.target.value);
+      valTheta2.textContent = `${state.theta2Deg.toFixed(1)}°`;
+      const diff = Math.abs((state.theta2Deg - state.theta1Deg + 360) % 360);
+      if (Math.abs(diff - 90) > 1 && Math.abs(diff - 270) > 1) {
+        state.lockOrthogonal = false;
+        chkLockOrthogonal.checked = false;
+      }
+      render();
+    });
+
+    chkLockOrthogonal.addEventListener('change', (e) => {
+      state.lockOrthogonal = e.target.checked;
+      if (state.lockOrthogonal) {
+        setTheta1(state.theta1Deg);
+      }
+    });
+
+    paramContrast2.addEventListener('input', (e) => {
+      state.c2 = parseFloat(e.target.value) / 100.0;
+      valContrast2.textContent = `${e.target.value}%`;
+      render();
+    });
+
+    // Texture Mode Tabs
+    const tabModeGabor = document.getElementById('tabModeGabor');
+    const tabModeCarrier = document.getElementById('tabModeCarrier');
+    const tabModeBands = document.getElementById('tabModeBands');
+
+    function setTextureMode(m) {
+      state.textureMode = m;
+      [tabModeGabor, tabModeCarrier, tabModeBands].forEach(b => b.classList.remove('active'));
+      if (m === 'gabor') tabModeGabor.classList.add('active');
+      else if (m === 'continuous') tabModeCarrier.classList.add('active');
+      else tabModeBands.classList.add('active');
+      render();
+    }
+
+    tabModeGabor.addEventListener('click', () => setTextureMode('gabor'));
+    tabModeCarrier.addEventListener('click', () => setTextureMode('continuous'));
+    tabModeBands.addEventListener('click', () => setTextureMode('bands'));
+
+    // Band Count
+    const paramBandCount = document.getElementById('paramBandCount');
+    const valBandCount = document.getElementById('valBandCount');
+    paramBandCount.addEventListener('input', (e) => {
+      state.numBands = parseInt(e.target.value, 10);
+      valBandCount.textContent = `${state.numBands} Bands`;
+      render();
+    });
+
+    // Dimension Checkboxes & Selectors
+    const chkVaryOri = document.getElementById('chkVaryOri');
+    const chkVaryFreq = document.getElementById('chkVaryFreq');
+    const chkVaryCol = document.getElementById('chkVaryCol');
+
+    chkVaryOri.addEventListener('change', (e) => { state.varyOrientation = e.target.checked; updateDimensionPanels(); render(); });
+    chkVaryFreq.addEventListener('change', (e) => { state.varyFrequency = e.target.checked; updateDimensionPanels(); render(); });
+    chkVaryCol.addEventListener('change', (e) => { state.varyColor = e.target.checked; updateDimensionPanels(); render(); });
+
+    document.getElementById('selOriScheme').addEventListener('change', (e) => { state.oriScheme = e.target.value; render(); });
+    document.getElementById('paramOriJitter').addEventListener('input', (e) => {
+      state.oriJitterDeg = parseFloat(e.target.value);
+      document.getElementById('valOriJitter').textContent = `${state.oriJitterDeg}°`;
+      render();
+    });
+    document.getElementById('paramConstOri').addEventListener('input', (e) => {
+      state.constOriDeg = parseFloat(e.target.value);
+      document.getElementById('valConstOri').textContent = `${state.constOriDeg}°`;
+      render();
+    });
+
+    document.getElementById('selFreqGrad').addEventListener('change', (e) => { state.freqGrad = e.target.value; render(); });
+    document.getElementById('paramConstFreq').addEventListener('input', (e) => {
+      state.constFreq = parseFloat(e.target.value);
+      document.getElementById('valConstFreq').textContent = `${state.constFreq}cy`;
+      render();
+    });
+
+    document.getElementById('selColPalette').addEventListener('change', (e) => { state.colPalette = e.target.value; render(); });
+    document.getElementById('selConstCol').addEventListener('change', (e) => { state.constCol = e.target.value; render(); });
+
+    // Presets
+    function setCuePreset(ori, freq, col) {
+      chkVaryOri.checked = ori; state.varyOrientation = ori;
+      chkVaryFreq.checked = freq; state.varyFrequency = freq;
+      chkVaryCol.checked = col; state.varyColor = col;
+      updateDimensionPanels();
+      render();
+    }
+
+    document.getElementById('btnPreOri').addEventListener('click', () => setCuePreset(true, false, false));
+    document.getElementById('btnPreFreq').addEventListener('click', () => setCuePreset(false, true, false));
+    document.getElementById('btnPreCol').addEventListener('click', () => setCuePreset(false, false, true));
+    document.getElementById('btnPreOriFreq').addEventListener('click', () => setCuePreset(true, true, false));
+    document.getElementById('btnPreAll').addEventListener('click', () => setCuePreset(true, true, true));
+
+    // Density, Phase & Contours
+    const paramDensity = document.getElementById('paramDensity');
+    const valDensity = document.getElementById('valDensity');
+    paramDensity.addEventListener('input', (e) => {
+      state.density = parseInt(e.target.value, 10);
+      valDensity.textContent = `${state.density < 22 ? 'Sparse' : (state.density > 34 ? 'Dense' : 'Medium')} (${state.density})`;
+      render();
+    });
+
+    document.getElementById('chkShowContours').addEventListener('change', (e) => { state.showContours = e.target.checked; render(); });
+    document.getElementById('chkRandomPhase').addEventListener('change', (e) => { state.randomPhase = e.target.checked; render(); });
+    document.getElementById('chkCrosshairs').addEventListener('change', (e) => { state.showCrosshairs = e.target.checked; render(); });
+
+    // Envelope
+    const paramSigma = document.getElementById('paramSigma');
+    const valSigma = document.getElementById('valSigma');
+    paramSigma.addEventListener('input', (e) => {
+      state.sigma = parseFloat(e.target.value);
+      valSigma.textContent = state.sigma >= 140 ? '∞ (Unbounded)' : `${state.sigma}`;
+      render();
+    });
+    document.querySelectorAll('.snap-pill[data-sigma]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.snap-pill[data-sigma]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        paramSigma.value = btn.dataset.sigma;
+        paramSigma.dispatchEvent(new Event('input'));
+      });
+    });
+
+    // View Switcher (Blend vs Decomp)
+    const btnViewBlend = document.getElementById('btnViewBlend');
+    const btnViewDecomp = document.getElementById('btnViewDecomp');
+
+    btnViewBlend.addEventListener('click', () => {
+      state.viewMode = 'blend';
+      btnViewBlend.classList.add('active');
+      btnViewDecomp.classList.remove('active');
+      blendCanvas.style.display = 'block';
+      decompContainer.style.display = 'none';
+      render();
+    });
+
+    btnViewDecomp.addEventListener('click', () => {
+      state.viewMode = 'decomp';
+      btnViewDecomp.classList.add('active');
+      btnViewBlend.classList.remove('active');
+      blendCanvas.style.display = 'none';
+      decompContainer.style.display = 'flex';
+      render();
+    });
+
+    // Cursor HUD Tracking
+    blendCanvas.addEventListener('pointermove', (e) => {
+      const rect = blendCanvas.getBoundingClientRect();
+      const px = Math.floor((e.clientX - rect.left) * (blendCanvas.width / rect.width));
+      const py = Math.floor((e.clientY - rect.top) * (blendCanvas.height / rect.height));
+
+      if (px >= 0 && px < blendCanvas.width && py >= 0 && py < blendCanvas.height) {
+        const idx = py * blendCanvas.width + px;
+        document.getElementById('hudPos').textContent = `${px}, ${py}`;
+        if (rawPlaid) document.getElementById('hudPlaid').textContent = rawPlaid[idx].toFixed(2);
+        if (rawBands) {
+          const bIdx = rawBands[idx];
+          document.getElementById('hudBand').textContent = `B${bIdx + 1}`;
+          const bands = getBandProperties();
+          const b = bands[bIdx] || bands[0];
+          document.getElementById('hudOri').textContent = b.isTangent ? '⊥' : `${Math.round((b.avgAngle * 180) / Math.PI)}°`;
+        }
+        if (rawBlend) {
+          const lum = Math.round(rawBlend[idx] * 255);
+          document.getElementById('hudRGB').textContent = `${lum}, ${lum}, ${lum}`;
+        }
+      }
+    });
+
+    // Dimensions
+    document.getElementById('selDimensions').addEventListener('change', (e) => {
+      const [w, h] = e.target.value.split('x').map(Number);
+      state.width = w; state.height = h;
+      updateShiftUI();
+      render();
+    });
+
+    // Export Actions
+    document.getElementById('btnDownloadImage').addEventListener('click', () => {
+      const link = document.createElement('a');
+      const mixTag = state.randomMixtureControl ? "_control_mixture" : "";
+      link.download = `plaid_isoluminance_blend_${state.width}x${state.height}_wP${Math.round(state.wPlaid*100)}_wT${Math.round(state.wTexture*100)}_shift${state.shiftX}x${state.shiftY}${mixTag}.png`;
+      link.href = blendCanvas.toDataURL('image/png');
+      link.click();
+    });
+
+    document.getElementById('btnExportCSV').addEventListener('click', () => {
+      if (!rawBlend) return;
+      let csv = "";
+      for (let y = 0; y < state.height; y++) {
+        const row = [];
+        for (let x = 0; x < state.width; x++) {
+          row.push(rawBlend[y * state.width + x].toFixed(4));
+        }
+        csv += row.join(",") + "\n";
+      }
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const link = document.createElement('a');
+      link.download = `plaid_isoblend_matrix_${state.width}x${state.height}.csv`;
+      link.href = URL.createObjectURL(blob);
+      link.click();
+    });
+
+    // Python Code Modal
+    const codeModal = document.getElementById('codeModal');
+    document.getElementById('btnExportCode').addEventListener('click', () => {
+      const snippet = `import numpy as np
+import matplotlib.pyplot as plt
+
+def generate_plaid_isoluminance_blend(
+    width=${state.width},
+    height=${state.height},
+    w_plaid=${state.wPlaid.toFixed(2)},
+    w_texture=${state.wTexture.toFixed(2)},
+    plaid_contrast=${state.plaidContrast.toFixed(2)},
+    shift_x=${state.shiftX},
+    shift_y=${state.shiftY},
+    random_mixture_control=${state.randomMixtureControl},
+    freq1=${state.freq1.toFixed(1)},
+    theta1_deg=${state.theta1Deg.toFixed(1)},
+    c1=${state.c1.toFixed(2)},
+    freq2=${state.freq2.toFixed(1)},
+    theta2_deg=${state.theta2Deg.toFixed(1)},
+    c2=${state.c2.toFixed(2)},
+    num_bands=${state.numBands},
+    vary_orientation=${state.varyOrientation},
+    vary_frequency=${state.varyFrequency},
+    vary_color=${state.varyColor}
+):
+    x = np.linspace(-width / 2, width / 2, width)
+    y = np.linspace(-height / 2, height / 2, height)
+    X, Y = np.meshgrid(x, y)
+
+    th1 = np.deg2rad(theta1_deg)
+    th2 = np.deg2rad(theta2_deg)
+    u1 = 2 * np.pi * (freq1 / width) * (X * np.cos(th1) + Y * np.sin(th1))
+    u2 = 2 * np.pi * (freq2 / width) * (X * np.cos(th2) + Y * np.sin(th2))
+
+    plaid = np.clip(0.5 * (1.0 + plaid_contrast * (c1 * np.cos(u1) + c2 * np.cos(u2))), 0.0, 1.0)
+
+    thresholds = np.linspace(0.0, 1.0, num_bands + 1)
+    texture = np.zeros((height, width), dtype=np.float32)
+
+    if random_mixture_control:
+        # Control condition: whole field has random mixture of band textons
+        grid_k = np.random.randint(0, num_bands, size=(height, width))
+        for k in range(num_bands):
+            mask = (grid_k == k)
+            theta = (k % 2) * (np.pi / 2.0) if vary_orientation else 0.0
+            sf = (14.0 + 20.0 * abs(k / num_bands - 0.5)) if vary_frequency else 18.0
+            carrier = 0.5 + 0.5 * np.cos(2 * np.pi * (sf / width) * (X * np.cos(theta) + Y * np.sin(theta)))
+            texture[mask] = carrier[mask]
+    else:
+        # Structured condition: aligned with plaid isoluminance contours
+        for k in range(num_bands):
+            mask = (plaid >= thresholds[k]) & (plaid < thresholds[k + 1])
+            theta = (k % 2) * (np.pi / 2.0) if vary_orientation else 0.0
+            sf = (14.0 + 20.0 * abs(k / num_bands - 0.5)) if vary_frequency else 18.0
+            carrier = 0.5 + 0.5 * np.cos(2 * np.pi * (sf / width) * (X * np.cos(theta) + Y * np.sin(theta)))
+            texture[mask] = carrier[mask]
+
+    if shift_x != 0 or shift_y != 0:
+        texture = np.roll(np.roll(texture, shift_x, axis=1), shift_y, axis=0)
+
+    blend = np.clip(w_plaid * plaid + w_texture * texture, 0.0, 1.0)
+    return blend, plaid, texture
+
+blend, plaid, texture = generate_plaid_isoluminance_blend()
+fig, axs = plt.subplots(1, 3, figsize=(12, 4))
+axs[0].imshow(plaid, cmap='gray'); axs[0].set_title("Plaid Signal")
+axs[1].imshow(texture, cmap='gray'); axs[1].set_title("Texture Field")
+axs[2].imshow(blend, cmap='gray'); axs[2].set_title("Weighted Blend")
+for ax in axs: ax.axis('off')
+plt.show()`;
+      document.getElementById('codeSnippet').textContent = snippet;
+      codeModal.style.display = 'flex';
+    });
+
+    document.getElementById('btnCloseModal').addEventListener('click', () => { codeModal.style.display = 'none'; });
+    codeModal.addEventListener('click', (e) => { if (e.target === codeModal) codeModal.style.display = 'none'; });
+    document.getElementById('btnCopyCode').addEventListener('click', () => {
+      navigator.clipboard.writeText(document.getElementById('codeSnippet').textContent);
+      document.getElementById('btnCopyCode').textContent = 'Copied!';
+      setTimeout(() => { document.getElementById('btnCopyCode').textContent = 'Copy Code'; }, 1500);
+    });
+
+    // Reset Handlers
+    function resetCard(cardKey) {
+      if (cardKey === 'weights') {
+        paramBlendAlpha.value = 50; paramBlendAlpha.dispatchEvent(new Event('input'));
+      } else if (cardKey === 'contrast') {
+        paramPlaidContrast.value = 100; paramPlaidContrast.dispatchEvent(new Event('input'));
+      } else if (cardKey === 'plaid') {
+        paramMasterFreq.value = 6; paramMasterFreq.dispatchEvent(new Event('input'));
+        setTheta1(45);
+        paramContrast1.value = 50; paramContrast1.dispatchEvent(new Event('input'));
+        paramContrast2.value = 50; paramContrast2.dispatchEvent(new Event('input'));
+        chkLockOrthogonal.checked = true; state.lockOrthogonal = true;
+      } else if (cardKey === 'shift') {
+        resetShift();
+      } else if (cardKey === 'texture') {
+        setArrangement(false);
+        setCuePreset(true, false, false);
+        paramBandCount.value = 5; paramBandCount.dispatchEvent(new Event('input'));
+        setTextureMode('gabor');
+        paramDensity.value = 28; paramDensity.dispatchEvent(new Event('input'));
+      } else if (cardKey === 'envelope') {
+        paramSigma.value = 150; paramSigma.dispatchEvent(new Event('input'));
+      }
+    }
+
+    document.querySelectorAll('button[data-reset]').forEach(b => {
+      b.addEventListener('click', () => resetCard(b.dataset.reset));
+    });
+
+    document.getElementById('btnResetAll').addEventListener('click', () => {
+      resetCard('weights');
+      resetCard('contrast');
+      resetCard('plaid');
+      resetCard('shift');
+      resetCard('texture');
+      resetCard('envelope');
+    });
+
+    // Initialize
+    updateDimensionPanels();
+    updateShiftUI();
+    render();
+  </script>
+</body>
+</html>
